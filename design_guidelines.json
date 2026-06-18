@@ -1,0 +1,160 @@
+{
+  "theme": "Dark",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) + Archetype 5 (Luxury/Premium)",
+  "vibe": "Clinical-grade calm, restrained, biological instrument with a screen",
+  "typography": {
+    "font_sans": "Geist, Inter, sans-serif",
+    "font_mono": "JetBrains Mono, IBM Plex Mono, monospace",
+    "rules": {
+      "headings": "font-sans tracking-tight text-white",
+      "body": "font-sans leading-relaxed text-slate-300",
+      "numerics": "font-mono tabular-nums tracking-tight",
+      "labels": "uppercase tracking-[0.1em] text-xs font-semibold text-slate-400"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-medium tracking-tight text-white",
+      "h2": "text-2xl sm:text-3xl font-medium text-white",
+      "metric_hero": "text-6xl font-mono tracking-tighter text-white",
+      "metric_card": "text-3xl font-mono tracking-tight text-white",
+      "body": "text-base text-slate-300",
+      "caption": "text-sm text-slate-400"
+    }
+  },
+  "colors": {
+    "background": {
+      "default": "#050507",
+      "panel": "#0F1115",
+      "elevated": "#16191E"
+    },
+    "accent": {
+      "teal_primary": "#1FA98F",
+      "teal_deep": "#0C6E5C",
+      "teal_muted": "rgba(31, 169, 143, 0.15)"
+    },
+    "status": {
+      "good": "#1FA98F",
+      "watch": "#F59E0B",
+      "alert": "#E15252"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#94A3B8",
+      "tertiary": "#475569"
+    },
+    "borders": {
+      "subtle": "rgba(255, 255, 255, 0.06)",
+      "focus": "#1FA98F"
+    }
+  },
+  "spacing_and_layout": {
+    "container": "max-w-md mx-auto min-h-screen bg-[#050507]",
+    "card_padding": "p-6",
+    "section_gap": "gap-6",
+    "radii": {
+      "card": "rounded-2xl (16px)",
+      "button": "rounded-full",
+      "pill": "rounded-full"
+    },
+    "shadows": {
+      "soft_card": "shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "bg-[#0F1115] border border-white/[0.06] rounded-2xl p-5 sm:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.4)]",
+      "hover": "transition-colors hover:border-white/[0.12]"
+    },
+    "signature_baseline_band": {
+      "description": "The athlete's historical normal range shaded behind key values.",
+      "chart_implementation": "In Recharts, use a secondary Area component or ReferenceArea behind the main Line to represent the historical band. Fill should be #1FA98F at 10-15% opacity.",
+      "ui_implementation": "For single text values, place a subtle teal gradient or solid teal block (opacity 15%) positioned absolutely behind the metric text, slightly overlapping the number."
+    },
+    "buttons": {
+      "primary": "bg-[#1FA98F] text-[#050507] font-semibold rounded-full px-6 py-3 hover:bg-[#3DD1B7] transition-colors",
+      "secondary": "bg-[#16191E] text-white border border-white/[0.06] rounded-full px-6 py-3 hover:bg-[#1E222A] transition-colors"
+    },
+    "navigation": {
+      "bottom_tabs": "fixed bottom-0 w-full max-w-md bg-[#050507]/90 backdrop-blur-xl border-t border-white/[0.06] pb-safe pt-2 px-6 flex justify-between items-center z-50",
+      "tab_item": "flex flex-col items-center gap-1 text-slate-500 hover:text-white transition-colors",
+      "tab_active": "text-[#1FA98F]"
+    },
+    "charts": {
+      "line": "stroke-[#1FA98F] stroke-[3px]",
+      "dots": "discrete test-event points should be filled circles (r=4) with #050507 stroke",
+      "baseline_area": "fill-[#1FA98F]/15",
+      "grid": "stroke-white/[0.04] stroke-dasharray-4"
+    }
+  },
+  "screens": {
+    "Onboarding": {
+      "layout": "Centered content, high negative space.",
+      "elements": "Account creation form (name, sport, goal). Apple Health connect button. Calibration messaging block 'Establishing your biological baseline...'"
+    },
+    "Today": {
+      "layout": "Bento-style scrollable dashboard.",
+      "elements": [
+        "Hero Readiness Score (0-100) using font-mono, with the signature baseline band shaded beneath.",
+        "One-word verdict badge (e.g., 'Train hard', 'Recover').",
+        "Invie Narrative Block: 2-3 sentences of AI interpretation (Geist font, leading-relaxed).",
+        "Compact Signal Cards (HRV, Sleep, Training Load, sIgA) in a 2x2 grid. Each shows value + delta vs baseline + directional arrow.",
+        "Footer: 'Stored in France · Yours' in text-xs text-slate-500."
+      ]
+    },
+    "Biomarker Detail": {
+      "layout": "Data-heavy, edge-to-edge chart container.",
+      "elements": [
+        "Focus: sIgA value at the top.",
+        "Full-width longitudinal line chart with shaded personal baseline band behind the trend line.",
+        "Toggle switch to overlay Training Load.",
+        "Secondary tabs for Cortisol / Testosterone / Creatinine."
+      ]
+    },
+    "Trends": {
+      "layout": "List of comparative metric rows.",
+      "elements": [
+        "Time range selector pill (2w / 6w / 3m).",
+        "Multi-metric comparison lists (Biomarkers vs Wearable)."
+      ]
+    },
+    "Invie": {
+      "layout": "Conversational UI.",
+      "elements": "Chat bubbles. User bubbles: dark elevated gray. Invie bubbles: subtle teal border or transparent with teal accent icon. Input area at bottom."
+    },
+    "Vault": {
+      "layout": "Settings-style list view.",
+      "elements": [
+        "List of connected sources (Apple Health, Labs Device, Manual).",
+        "Status indicators (last-sync).",
+        "Export My Data button.",
+        "Sovereignty messaging block highlighting RGPD compliance."
+      ]
+    }
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.unsplash.com/photo-1548362851-ea052637ad64?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MTN8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGRhcmslMjBiaW9sdW1pbmVzY2VuY2UlMjB0ZXh0dXJlfGVufDB8fHx8MTc4MTc3NTUzMnww&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract dark bioluminescence texture (blurry blue/green)",
+        "category": "onboarding_background_or_hero_texture"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1557264322-b44d383a2906?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MTN8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhcmslMjBiaW9sdW1pbmVzY2VuY2UlMjB0ZXh0dXJlfGVufDB8fHx8MTc4MTc3NTUzMnww&ixlib=rb-4.1.0&q=85",
+        "description": "Green and pink abstract art (microscopic/cellular feel)",
+        "category": "invie_ai_avatar_background"
+      }
+    ],
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-[1.5px] to match the clinical, precise aesthetic."
+    }
+  },
+  "instructions_to_main_agent": [
+    "This is a mobile-first web app view simulating React Native. Enforce a mobile container logic (e.g. max-w-md mx-auto) for the root element if deployed to web, or full screen if using pure mobile constraints.",
+    "CRITICAL: Use tabular-nums utility class on ALL numeric values. Numbers must not shift when they change.",
+    "CRITICAL: The 'Personal Baseline Band' must be visible behind the main Hero Readiness Score and inside all charts.",
+    "Do NOT use pure black (#000000). Use the specified dark shades (#050507, #0F1115).",
+    "Do NOT use generic fitness app gradients. Keep surfaces flat, matte, and precise. Use 1px borders (border-white/[0.06]) to define structure.",
+    "Add data-testid attributes to all interactive elements for robust testing.",
+    "For charts, use Recharts. Implement the baseline band using ReferenceArea or a secondary Area component."
+  ]
+}
