@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -8,12 +8,18 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   Switch,
+  Image,
+  Animated,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 import { colors, radii, spacing, typography, numeric } from "@/src/theme";
 import { api, BiomarkerResponse } from "@/src/api";
 import { BaselineChart } from "@/src/components/Chart";
+
+const DEVICE_IMAGE = require("../../assets/device.png");
 
 type Metric = "siga" | "cortisol" | "testosterone" | "creatinine";
 
@@ -31,6 +37,13 @@ export default function BiomarkersScreen() {
   const [loading, setLoading] = useState(false);
   const [overlay, setOverlay] = useState(true);
 
+  // External Labs biomarker device — Bluetooth simulation
+  const [bleState, setBleState] = useState<"idle" | "connecting" | "connected">("idle");
+  const [running, setRunning] = useState(false);
+  const [runProgress, setRunProgress] = useState(0); // 0..1
+  const [lastRunAt, setLastRunAt] = useState<Date | null>(null);
+  const pulse = useRef(new Animated.Value(0)).current;
+
   const load = useCallback(async (m: Metric) => {
     setLoading(true);
     try {
@@ -40,6 +53,46 @@ export default function BiomarkersScreen() {
       setLoading(false);
     }
   }, []);
+
+  // Pulse animation for the LED while connecting / running
+  useEffect(() => {
+    if (bleState === "connecting" || running) {
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulse, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ]),
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      pulse.setValue(0);
+    }
+  }, [bleState, running, pulse]);
+
+  const onConnect = useCallback(() => {
+    if (bleState === "connected" || bleState === "connecting") return;
+    setBleState("connecting");
+    setTimeout(() => setBleState("connected"), 1600);
+  }, [bleState]);
+
+  const onRun = useCallback(() => {
+    if (bleState !== "connected" || running) return;
+    setRunning(true);
+    setRunProgress(0);
+    const start = Date.now();
+    const total = 4200; // ~4.2s simulated run
+    const tick = setInterval(() => {
+      const p = Math.min(1, (Date.now() - start) / total);
+      setRunProgress(p);
+      if (p >= 1) {
+        clearInterval(tick);
+        setRunning(false);
+        setLastRunAt(new Date());
+        load(metric);
+      }
+    }, 80);
+  }, [bleState, running, metric, load]);
 
   useEffect(() => {
     load(metric);
@@ -87,6 +140,130 @@ export default function BiomarkersScreen() {
           <ActivityIndicator color={colors.teal} style={{ marginTop: 60 }} />
         ) : (
           <>
+            {/* Labs biomarker device — Bluetooth instrument */}
+            <View style={styles.deviceCard} testID="device-card">
+              <View style={styles.deviceImageWrap}>
+                <Image
+                  source={DEVICE_IMAGE}
+                  style={styles.deviceImage}
+                  resizeMode="contain"
+                />
+                {/* LED indicator */}
+                <View style={styles.ledWrap}>
+                  <Text style={styles.ledLabel}>
+                    {running
+                      ? "PROCESSING"
+                      : bleState === "connecting"
+                      ? "PAIRING"
+                      : bleState === "connected"
+                      ? "READY"
+                      : "OFFLINE"}
+                  </Text>
+                  <Animated.View
+                    style={[
+                      styles.ledDot,
+                      {
+                        backgroundColor:
+                          running
+                            ? colors.alert
+                            : bleState === "connected"
+                            ? colors.good
+                            : bleState === "connecting"
+                            ? colors.watch
+                            : colors.textTertiary,
+                        opacity:
+                          bleState === "connecting" || running
+                            ? pulse.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] })
+                            : 1,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.deviceMeta}>
+                <View>
+                  <Text style={styles.deviceName}>Labs Biomarker Device</Text>
+                  <Text style={styles.deviceSerial}>
+                    Saliva · Capillary · Urine · BLE 5.2
+                  </Text>
+                </View>
+                {lastRunAt && (
+                  <View style={styles.deviceLastRun}>
+                    <Text style={styles.deviceLastRunLabel}>last run</Text>
+                    <Text style={styles.deviceLastRunValue}>
+                      {lastRunAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Run progress bar */}
+              {running && (
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${runProgress * 100}%` }]} />
+                </View>
+              )}
+
+              {/* Connect + Run buttons */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  testID="device-connect"
+                  onPress={onConnect}
+                  disabled={bleState === "connecting" || bleState === "connected"}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.btn,
+                    styles.btnConnect,
+                    bleState === "connected" && styles.btnConnected,
+                  ]}
+                >
+                  {bleState === "connecting" ? (
+                    <ActivityIndicator size="small" color={colors.teal} />
+                  ) : (
+                    <Ionicons
+                      name="bluetooth"
+                      size={16}
+                      color={bleState === "connected" ? colors.good : colors.teal}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.btnLabel,
+                      { color: bleState === "connected" ? colors.good : colors.teal },
+                    ]}
+                  >
+                    {bleState === "connected"
+                      ? "Connected"
+                      : bleState === "connecting"
+                      ? "Pairing…"
+                      : "Connect"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  testID="device-run"
+                  onPress={onRun}
+                  disabled={bleState !== "connected" || running}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.btn,
+                    styles.btnRun,
+                    (bleState !== "connected" || running) && styles.btnRunDisabled,
+                  ]}
+                >
+                  {running ? (
+                    <ActivityIndicator size="small" color={colors.bg} />
+                  ) : (
+                    <Ionicons name="play" size={14} color={colors.bg} />
+                  )}
+                  <Text style={styles.btnRunLabel}>
+                    {running ? `Running ${Math.round(runProgress * 100)}%` : "Run"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Latest value */}
             <View style={styles.latestCard} testID="biomarker-latest">
               <View style={styles.latestRow}>
@@ -260,6 +437,99 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     paddingBottom: 120,
   },
+  deviceCard: {
+    backgroundColor: colors.panel,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radii.card,
+    padding: spacing.lg,
+    gap: spacing.md,
+    overflow: "hidden",
+  },
+  deviceImageWrap: {
+    width: "100%",
+    height: 160,
+    borderRadius: 12,
+    backgroundColor: "#0a0c10",
+    borderColor: colors.border,
+    borderWidth: 1,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deviceImage: {
+    width: "108%",
+    height: "108%",
+  },
+  ledWrap: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.pill,
+    borderColor: colors.borderStrong,
+    borderWidth: 1,
+  },
+  ledLabel: { ...numeric, fontSize: 9, letterSpacing: 1.5, color: colors.textSecondary },
+  ledDot: { width: 7, height: 7, borderRadius: 4 },
+  deviceMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  deviceName: { color: colors.textPrimary, fontSize: 15, fontWeight: "600", letterSpacing: -0.2 },
+  deviceSerial: { ...numeric, fontSize: 11, color: colors.textTertiary, marginTop: 2 },
+  deviceLastRun: { alignItems: "flex-end" },
+  deviceLastRunLabel: { ...typography.label, fontSize: 9 },
+  deviceLastRunValue: { ...numeric, fontSize: 13, color: colors.textPrimary, marginTop: 2 },
+  progressTrack: {
+    height: 3,
+    backgroundColor: colors.borderStrong,
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: colors.teal,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  btn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+  },
+  btnConnect: {
+    backgroundColor: colors.tealFaint,
+    borderColor: colors.teal,
+  },
+  btnConnected: {
+    backgroundColor: "transparent",
+    borderColor: colors.good,
+  },
+  btnLabel: { fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
+  btnRun: {
+    backgroundColor: colors.teal,
+    borderColor: colors.teal,
+  },
+  btnRunDisabled: {
+    backgroundColor: colors.panelElevated,
+    borderColor: colors.border,
+  },
+  btnRunLabel: { color: colors.bg, fontSize: 13, fontWeight: "700", letterSpacing: 0.3 },
   latestCard: {
     backgroundColor: colors.panel,
     borderColor: colors.border,
